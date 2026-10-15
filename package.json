@@ -1,0 +1,18 @@
+{
+  "name": "ong-apia-monorepo",
+  "version": "1.0.0",
+  "description": "Plataforma Web Institucional da ONG APIA - Lagoa Vermelha / IFSUL",
+  "scripts": {
+    "dev:server": "npm --prefix server run dev",
+    "dev:client": "npm --prefix client run dev",
+    "build:server": "npm --prefix server run build",
+    "build:client": "npm --prefix client run build",
+    "build": "npm run build:server && npm run build:client",
+    "db:push": "npm --prefix server run db:push",
+    "db:seed": "npm --prefix server run db:seed",
+    "db:studio": "npm --prefix server run db:studio"
+  },
+  "keywords": ["ong-apia", "ifsul", "react", "express", "drizzle", "postgresql"],
+  "author": "APIA / IFSUL",
+  "license": "MIT"
+}

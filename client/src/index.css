@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-apia-bg text-apia-text min-h-screen flex flex-col;
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+.font-handwriting {
+  font-family: 'Caveat', cursive;
+}
+
+/* Smooth transition defaults */
+button, a {
+  @apply transition-colors duration-200;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #F1F5F2;
+}
+::-webkit-scrollbar-thumb {
+  background: #B6CEBE;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #1E4633;
+}
