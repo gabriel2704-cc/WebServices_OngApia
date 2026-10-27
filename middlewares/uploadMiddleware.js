@@ -13,19 +13,17 @@ if (!fs.existsSync(DIRETORIO_UPLOADS)) {
   fs.mkdirSync(DIRETORIO_UPLOADS, { recursive: true });
 }
 
-const armazenamentoEmDisco = multer.diskStorage({
-  destination: (_req, _arquivo, cb) => {
-    cb(null, DIRETORIO_UPLOADS);
-  },
-  filename: (_req, arquivo, cb) => {
-    const sufixoUnico = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    const extensao = path.extname(arquivo.originalname).toLowerCase();
-    cb(null, `foto-${sufixoUnico}${extensao}`);
-  },
-});
+const armazenamentoEmMemoria = multer.memoryStorage();
+
+export function arquivoParaDataUrl(arquivo) {
+  if (!arquivo || !arquivo.buffer) return null;
+  const mime = arquivo.mimetype || 'image/jpeg';
+  const base64 = arquivo.buffer.toString('base64');
+  return `data:${mime};base64,${base64}`;
+}
 
 export const upload = multer({
-  storage: armazenamentoEmDisco,
+  storage: armazenamentoEmMemoria,
   limits: {
     fileSize: 10 * 1024 * 1024, // 10MB
   },
@@ -63,6 +61,11 @@ export const uploadFoto = (req, res, next) => {
         message: erro.message || 'Erro ao processar imagem.',
       });
     }
+
+    if (req.file) {
+      req.file.dataUrl = arquivoParaDataUrl(req.file);
+    }
+
     next();
   });
 };

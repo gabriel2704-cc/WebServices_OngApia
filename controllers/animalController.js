@@ -1,4 +1,5 @@
 import { animalUseCases } from '../usecases/animalUseCases.js';
+import { arquivoParaDataUrl } from '../middlewares/uploadMiddleware.js';
 
 export const animalController = {
   async listar(req, res) {
@@ -44,7 +45,7 @@ export const animalController = {
 
       let photoUrl = corpo.photoUrl || corpo.photo_url;
       if (req.file) {
-        photoUrl = `/uploads/${req.file.filename}`;
+        photoUrl = req.file.dataUrl || arquivoParaDataUrl(req.file);
       }
 
       if (!photoUrl) {
@@ -94,7 +95,7 @@ export const animalController = {
       if (!req.file) {
         return res.status(400).json({ success: false, mensagem: 'Nenhum arquivo enviado.' });
       }
-      const urlFoto = `/uploads/${req.file.filename}`;
+      const urlFoto = req.file.dataUrl || arquivoParaDataUrl(req.file);
       return res.status(200).json({
         success: true,
         mensagem: 'Foto enviada com sucesso!',
@@ -143,7 +144,7 @@ export const animalController = {
       }
 
       if (req.file) {
-        dadosAtualizados.photoUrl = `/uploads/${req.file.filename}`;
+        dadosAtualizados.photoUrl = req.file.dataUrl || arquivoParaDataUrl(req.file);
       } else if (corpo.photoUrl || corpo.photo_url) {
         dadosAtualizados.photoUrl = corpo.photoUrl || corpo.photo_url;
       }

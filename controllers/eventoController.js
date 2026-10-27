@@ -1,4 +1,5 @@
 import { eventoUseCases } from '../usecases/eventoUseCases.js';
+import { arquivoParaDataUrl } from '../middlewares/uploadMiddleware.js';
 
 export const eventoController = {
   async listar(req, res) {
@@ -36,7 +37,7 @@ export const eventoController = {
 
       let finalPhotoUrl = photoUrl;
       if (req.file) {
-        finalPhotoUrl = `/uploads/${req.file.filename}`;
+        finalPhotoUrl = req.file.dataUrl || arquivoParaDataUrl(req.file);
       }
 
       const evento = await eventoUseCases.cadastrar({
@@ -76,7 +77,7 @@ export const eventoController = {
       }
 
       if (req.file) {
-        dadosAtualizados.photoUrl = `/uploads/${req.file.filename}`;
+        dadosAtualizados.photoUrl = req.file.dataUrl || arquivoParaDataUrl(req.file);
       } else if (corpo.photoUrl !== undefined) {
         dadosAtualizados.photoUrl = corpo.photoUrl;
       }
