@@ -4,8 +4,7 @@ import jwt from 'jsonwebtoken';
 import { db } from '../db.js';
 import { usuarios } from '../schema.js';
 import { Usuario } from '../entities/Usuario.js';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'ong_apia_jwt_secret_dev_chave_segura_2026';
+import { JWT_SECRET } from '../jwtConfig.js';
 const JWT_EXPIRES_IN = '7d';
 
 export const usuarioUseCases = {

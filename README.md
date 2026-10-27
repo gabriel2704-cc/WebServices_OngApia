@@ -116,21 +116,33 @@ Os pontos de coleta podem começar como conteúdo institucional mantido pela equ
 
 O botão de contato poderá abrir um endereço `wa.me` com o número oficial da ONG e uma mensagem inicial preenchida, identificando o animal de interesse. O número e o texto definitivo devem ser confirmados com a diretoria antes da publicação. A mensagem é apenas uma abertura da conversa: a equipe da ONG continuará responsável por orientar e avaliar a adoção.
 
-## Publicação gratuita
+## Publicação no Render, Vercel e Neon
 
-Uma opção inicial, sem custo obrigatório, é manter o código no GitHub, publicar o front-end no **Cloudflare Pages** e usar o plano gratuito do **Supabase** para banco de dados PostgreSQL, autenticação, armazenamento de imagens e, se adequado, funções de backend. Essa combinação evita manter um servidor próprio ligado continuamente e oferece endereços gratuitos dos provedores com HTTPS.
+Este repositório contém a API Node.js/PostgreSQL. O frontend ainda não está incluído; ele precisa ser adicionado ao repositório ou publicado a partir de outro repositório antes de configurar o projeto na Vercel.
 
-### Caminho sugerido
+### API no Render
 
-1. Criar o repositório do projeto no GitHub e registrar as alterações em commits semanais.
-2. Conectar o repositório ao Cloudflare Pages para publicar o front-end automaticamente a cada atualização da branch principal.
-3. Criar um projeto no Supabase para banco de dados, autenticação do painel e armazenamento das imagens.
-4. Configurar as variáveis de ambiente e as regras de acesso, sem colocar senhas, chaves privadas ou credenciais no repositório.
-5. Validar formulários, permissões, links de contato e funcionamento em celular antes de divulgar o endereço público.
+O arquivo `render.yaml` configura o serviço web, a verificação de saúde e o deploy automático pela branch principal. Ao criar o Blueprint no Render, configure estas variáveis no painel do serviço:
 
-**Alternativa:** GitHub Pages pode hospedar gratuitamente um site estático. Como não executa um backend tradicional, formulários, autenticação e dados dinâmicos exigem um serviço externo, por exemplo o Supabase.
+| Variável | Valor |
+| --- | --- |
+| `DATABASE_URL` | URL de conexão PostgreSQL do Neon, copiada como segredo do painel Neon |
+| `JWT_SECRET` | Valor aleatório forte com pelo menos 32 caracteres |
+| `CLIENT_URL` | Origem do frontend Vercel, por exemplo `https://seu-site.vercel.app`; várias origens podem ser separadas por vírgula |
+| `ADMIN_EMAIL` | E-mail para a conta administrativa inicial |
+| `ADMIN_PASSWORD` | Senha inicial com pelo menos 12 caracteres |
 
-Os serviços citados oferecem planos gratuitos, mas podem ter limites de uso, armazenamento, tráfego, recursos ou inatividade, e suas condições podem mudar. Antes da publicação, a equipe deve conferir os limites e termos vigentes. O endereço fornecido pelo serviço é suficiente para começar; domínio próprio pode ter custo.
+Não coloque esses valores no GitHub nem os envie em mensagens. O servidor só inicia após conectar ao banco e criar/verificar as tabelas. `ADMIN_PASSWORD` só configura a senha na criação inicial; alterar essa variável depois não troca a senha de uma conta existente.
+
+Antes de liberar a API publicamente, restrinja o endpoint `/auth/register`: atualmente ele permite que qualquer pessoa crie uma conta e receba um token usado nas operações administrativas.
+
+### Frontend na Vercel
+
+Quando o código do frontend estiver disponível, importe o repositório/pasta correta na Vercel e configure a variável de ambiente usada pelo frontend para apontar à URL pública do Render. O nome dessa variável depende da ferramenta usada no frontend (por exemplo, Vite ou Create React App). Configure também o domínio Vercel em `CLIENT_URL` no Render para permitir chamadas da API pelo navegador.
+
+### Persistência de imagens
+
+Os uploads atuais são gravados na pasta local `uploads/`. O disco do serviço Render pode ser efémero; portanto, as imagens podem deixar de existir após reinicializações ou novos deploys. Antes de usar o site em produção, migre os uploads para um armazenamento externo persistente (por exemplo, Cloudinary ou S3 compatível) e configure suas credenciais somente no painel do provedor.
 
 ## Cuidados com dados e segurança
 

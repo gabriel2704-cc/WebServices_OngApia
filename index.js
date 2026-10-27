@@ -7,13 +7,25 @@ import { rotasEventos } from './routes/rotasEventos.js';
 import { rotasAuth } from './routes/rotasAuth.js';
 import { rotasApi } from './routes/index.js';
 import { inicializarBanco } from './database/seed.js';
+import { pool } from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const UPLOADS_DIR = path.resolve(__dirname, 'uploads');
 
 export const app = express();
-app.use(cors()); // autoriza que o navegador permita que o front-end faça requisições e receba dados da API
+const origensPermitidas = (process.env.CLIENT_URL || 'http://localhost:5173')
+  .split(',')
+  .map((origem) => origem.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin: (origem, callback) => {
+      callback(null, !origem || origensPermitidas.includes(origem));
+    },
+  })
+);
 app.use(express.json({ limit: '20mb' })); // recebe o envelope com texto json bruto do front e transforma em obj req.body
 app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 
@@ -40,11 +52,11 @@ if (process.env.NODE_ENV !== 'test') {
   inicializarBanco()
     .then(() => {
       console.log('Banco de dados verificado (tabelas users, animals e events prontas).');
-    })
-    .catch((erro) => {
-      console.error('Aviso ao inicializar tabelas do banco:', erro.message);
-    })
-    .finally(() => {
       app.listen(PORT, () => console.log(`API rodando na porta ${PORT}`));
+    })
+    .catch(async (erro) => {
+      console.error('Erro ao inicializar a API:', erro);
+      await pool.end();
+      process.exitCode = 1;
     });
 }

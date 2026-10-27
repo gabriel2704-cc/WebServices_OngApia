@@ -1,6 +1,5 @@
 import jwt from 'jsonwebtoken';
-
-const CHAVE_SECRETA_JWT = process.env.JWT_SECRET || 'ong_apia_jwt_secret_dev_chave_segura_2026';
+import { JWT_SECRET } from '../jwtConfig.js';
 
 // Middleware de Autenticação JWT (JSON Web Token)
 export function autenticarJWT(req, res, next) {
@@ -17,7 +16,7 @@ export function autenticarJWT(req, res, next) {
   const token = cabecalhoAutorizacao.split(' ')[1];
 
   try {
-    const dadosDecodificados = jwt.verify(token, CHAVE_SECRETA_JWT);
+    const dadosDecodificados = jwt.verify(token, JWT_SECRET);
     req.user = dadosDecodificados;
     req.usuario = dadosDecodificados;
     next();

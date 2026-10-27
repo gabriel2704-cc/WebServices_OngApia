@@ -41,15 +41,26 @@ export async function inicializarBanco() {
     );
   `);
 
-  // 2. Cria usuário administrador padrão se não existir
+  // 2. Cria o usuário administrativo inicial se não existir
+  const emProducao = process.env.NODE_ENV === 'production';
+  const emailAdmin =
+    process.env.ADMIN_EMAIL || (emProducao ? undefined : 'admin@apia.org.br');
+  const senhaAdmin = process.env.ADMIN_PASSWORD || (emProducao ? undefined : 'admin123');
+
+  if (!emailAdmin || !senhaAdmin || (emProducao && senhaAdmin.length < 12)) {
+    throw new Error(
+      'Em produção, defina ADMIN_EMAIL e ADMIN_PASSWORD (com pelo menos 12 caracteres).'
+    );
+  }
+
   const salt = await bcrypt.genSalt(10);
-  const passwordHash = await bcrypt.hash('admin123', salt);
+  const passwordHash = await bcrypt.hash(senhaAdmin, salt);
 
   await db
     .insert(users)
     .values({
       name: 'Administração APIA',
-      email: 'admin@apia.org.br',
+      email: emailAdmin.toLowerCase().trim(),
       passwordHash,
     })
     .onConflictDoNothing();

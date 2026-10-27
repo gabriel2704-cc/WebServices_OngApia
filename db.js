@@ -11,6 +11,9 @@ const __dirname = path.dirname(__filename);
 // Carrega o .env da pasta server (ou da raiz do projeto)
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 dotenv.config();
+if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
+  throw new Error('Defina DATABASE_URL para conectar ao banco PostgreSQL em produção.');
+}
 
 const connectionString =
   process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/ong_apia';
