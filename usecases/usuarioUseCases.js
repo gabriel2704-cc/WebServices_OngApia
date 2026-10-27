@@ -3,53 +3,11 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { db } from '../db.js';
 import { usuarios } from '../schema.js';
-import { Usuario } from '../entities/Usuario.js';
 import { JWT_SECRET } from '../jwtConfig.js';
+
 const JWT_EXPIRES_IN = '7d';
 
 export const usuarioUseCases = {
-  async registrar({ name, email, password }) {
-    const emailLimpo = email.toLowerCase().trim();
-
-    const existente = await db.select().from(usuarios).where(eq(usuarios.email, emailLimpo)).limit(1);
-    if (existente.length > 0) {
-      throw new Error('Já existe um usuário cadastrado com este e-mail.');
-    }
-
-    if (password.length < 6) {
-      throw new Error('A senha deve conter no mínimo 6 caracteres.');
-    }
-
-    const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash(password, salt);
-
-    const entidade = new Usuario({
-      name: name.trim(),
-      email: emailLimpo,
-      passwordHash,
-    });
-
-    const [novo] = await db
-      .insert(usuarios)
-      .values({
-        name: entidade.name,
-        email: entidade.email,
-        passwordHash: entidade.passwordHash,
-      })
-      .returning();
-
-    const token = jwt.sign(
-      { id: novo.id, email: novo.email, name: novo.name },
-      JWT_SECRET,
-      { expiresIn: JWT_EXPIRES_IN }
-    );
-
-    return {
-      user: { id: novo.id, name: novo.name, email: novo.email },
-      token,
-    };
-  },
-
   async login({ email, password }) {
     const emailLimpo = email.toLowerCase().trim();
 

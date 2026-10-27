@@ -4,7 +4,6 @@ import { autenticarJWT } from '../middlewares/authMiddleware.js';
 
 export const rotasAuth = Router();
 
-rotasAuth.post('/register', authController.registrar);
 rotasAuth.post('/login', authController.login);
 rotasAuth.get('/me', autenticarJWT, authController.me);
 
