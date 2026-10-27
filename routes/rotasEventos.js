@@ -5,6 +5,9 @@ import { uploadFoto } from '../middlewares/uploadMiddleware.js';
 
 export const rotasEventos = Router();
 
+// A listagem administrativa precisa vir antes da rota parametrizada.
+rotasEventos.get('/admin', autenticarJWT, eventoController.listarTodos);
+
 // Rotas públicas
 rotasEventos.get('/', eventoController.listar);
 rotasEventos.get('/:id', eventoController.buscarPorId);

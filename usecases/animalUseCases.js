@@ -2,6 +2,7 @@ import { eq, and, ilike, or, desc } from 'drizzle-orm';
 import { db } from '../db.js';
 import { animais } from '../schema.js';
 import { Animal } from '../entities/Animal.js';
+import { AnimalNotFoundError, validarDadosAnimal } from '../entities/animalValidation.js';
 
 export const animalUseCases = {
   async listar(filtros = {}) {
@@ -49,35 +50,16 @@ export const animalUseCases = {
   async buscarPorId(id) {
     const resultado = await db.select().from(animais).where(eq(animais.id, id)).limit(1);
     if (resultado.length === 0) {
-      throw new Error(`Animal com ID #${id} não encontrado.`);
+      throw new AnimalNotFoundError(id);
     }
     return resultado[0];
   },
 
   async cadastrar(dados) {
-    if (!dados.name || dados.name.trim() === '') {
-      throw new Error('O nome do animal é obrigatório.');
-    }
-    if (!dados.species || !['cachorro', 'gato'].includes(dados.species.toLowerCase())) {
-      throw new Error('A espécie deve ser "cachorro" ou "gato".');
-    }
-    if (!dados.size || !['pequeno', 'medio', 'grande'].includes(dados.size.toLowerCase())) {
-      throw new Error('O porte deve ser "pequeno", "medio" ou "grande".');
-    }
+    const dadosValidados = validarDadosAnimal(dados);
 
     const entidade = new Animal({
-      name: dados.name,
-      species: dados.species,
-      breed: dados.breed,
-      size: dados.size,
-      age: dados.age,
-      gender: dados.gender,
-      temperament: dados.temperament,
-      description: dados.description,
-      isCastrated: dados.isCastrated,
-      isVaccinated: dados.isVaccinated,
-      photoUrl: dados.photoUrl,
-      status: dados.status || 'disponivel',
+      ...dadosValidados,
     });
 
     const res = await db
@@ -103,10 +85,11 @@ export const animalUseCases = {
 
   async atualizar(id, dados) {
     await this.buscarPorId(id);
+    const dadosValidados = validarDadosAnimal(dados, { parcial: true });
 
     const res = await db
       .update(animais)
-      .set(dados)
+      .set(dadosValidados)
       .where(eq(animais.id, id))
       .returning();
 

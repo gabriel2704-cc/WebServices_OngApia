@@ -8,6 +8,7 @@
     "dev": "node --watch index.js",
     "start": "node index.js",
     "build": "echo \"Backend em JS puro (sem necessidade de build)\"",
+    "test": "node --test",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",

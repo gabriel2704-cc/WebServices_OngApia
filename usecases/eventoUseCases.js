@@ -1,4 +1,4 @@
-import { eq, desc } from 'drizzle-orm';
+import { and, eq, desc } from 'drizzle-orm';
 import { db } from '../db.js';
 import { eventos } from '../schema.js';
 import { Evento } from '../entities/Evento.js';
@@ -14,8 +14,12 @@ export const eventoUseCases = {
     return await consulta.orderBy(desc(eventos.date), desc(eventos.createdAt));
   },
 
-  async buscarPorId(id) {
-    const resultado = await db.select().from(eventos).where(eq(eventos.id, id)).limit(1);
+  async buscarPorId(id, apenasVisiveis = false) {
+    const condicoes = [eq(eventos.id, id)];
+    if (apenasVisiveis) {
+      condicoes.push(eq(eventos.isVisible, true));
+    }
+    const resultado = await db.select().from(eventos).where(and(...condicoes)).limit(1);
     if (resultado.length === 0) {
       throw new Error(`Evento com ID #${id} não encontrado.`);
     }

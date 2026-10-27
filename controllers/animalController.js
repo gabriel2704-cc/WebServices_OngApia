@@ -1,5 +1,31 @@
 import { animalUseCases } from '../usecases/animalUseCases.js';
 import { arquivoParaDataUrl } from '../middlewares/uploadMiddleware.js';
+import {
+  AnimalNotFoundError,
+  AnimalValidationError,
+  normalizarBooleano,
+} from '../entities/animalValidation.js';
+
+function responderErroAnimal(res, err) {
+  if (err instanceof AnimalValidationError) {
+    return res.status(400).json({ success: false, mensagem: err.message, message: err.message });
+  }
+  if (err instanceof AnimalNotFoundError) {
+    return res.status(404).json({ success: false, mensagem: err.message, message: err.message });
+  }
+
+  console.error('[Animais] Erro ao processar requisição:', err);
+  return res.status(500).json({
+    success: false,
+    mensagem: 'Não foi possível processar a solicitação de animal.',
+    message: 'Não foi possível processar a solicitação de animal.',
+  });
+}
+
+function obterBooleano(corpo, campo, campoAlternativo, padrao) {
+  const valor = corpo[campo] !== undefined ? corpo[campo] : corpo[campoAlternativo];
+  return valor === undefined ? padrao : normalizarBooleano(valor, campo);
+}
 
 export const animalController = {
   async listar(req, res) {
@@ -35,7 +61,7 @@ export const animalController = {
       const animal = await animalUseCases.buscarPorId(id);
       return res.status(200).json({ success: true, data: animal });
     } catch (err) {
-      return res.status(404).json({ success: false, mensagem: err.message });
+      return responderErroAnimal(res, err);
     }
   },
 
@@ -52,17 +78,8 @@ export const animalController = {
         return res.status(400).json({ success: false, mensagem: 'A foto do animal é obrigatória.' });
       }
 
-      const isCastrated =
-        corpo.isCastrated === true ||
-        corpo.isCastrated === 'true' ||
-        corpo.is_castrated === true ||
-        corpo.is_castrated === 'true';
-
-      const isVaccinated =
-        corpo.isVaccinated === true ||
-        corpo.isVaccinated === 'true' ||
-        corpo.is_vaccinated === true ||
-        corpo.is_vaccinated === 'true';
+      const isCastrated = obterBooleano(corpo, 'isCastrated', 'is_castrated', false);
+      const isVaccinated = obterBooleano(corpo, 'isVaccinated', 'is_vaccinated', false);
 
       const animal = await animalUseCases.cadastrar({
         name: corpo.name,
@@ -86,7 +103,7 @@ export const animalController = {
         data: animal,
       });
     } catch (err) {
-      return res.status(400).json({ success: false, mensagem: err.message, message: err.message });
+      return responderErroAnimal(res, err);
     }
   },
 
@@ -128,19 +145,11 @@ export const animalController = {
       if (corpo.status !== undefined) dadosAtualizados.status = corpo.status;
 
       if (corpo.isCastrated !== undefined || corpo.is_castrated !== undefined) {
-        dadosAtualizados.isCastrated =
-          corpo.isCastrated === true ||
-          corpo.isCastrated === 'true' ||
-          corpo.is_castrated === true ||
-          corpo.is_castrated === 'true';
+        dadosAtualizados.isCastrated = obterBooleano(corpo, 'isCastrated', 'is_castrated');
       }
 
       if (corpo.isVaccinated !== undefined || corpo.is_vaccinated !== undefined) {
-        dadosAtualizados.isVaccinated =
-          corpo.isVaccinated === true ||
-          corpo.isVaccinated === 'true' ||
-          corpo.is_vaccinated === true ||
-          corpo.is_vaccinated === 'true';
+        dadosAtualizados.isVaccinated = obterBooleano(corpo, 'isVaccinated', 'is_vaccinated');
       }
 
       if (req.file) {
@@ -157,7 +166,7 @@ export const animalController = {
         data: animal,
       });
     } catch (err) {
-      return res.status(400).json({ success: false, mensagem: err.message, message: err.message });
+      return responderErroAnimal(res, err);
     }
   },
 
@@ -172,7 +181,7 @@ export const animalController = {
         data: animal,
       });
     } catch (err) {
-      return res.status(400).json({ success: false, mensagem: err.message });
+      return responderErroAnimal(res, err);
     }
   },
 
@@ -187,7 +196,7 @@ export const animalController = {
         data: animal,
       });
     } catch (err) {
-      return res.status(400).json({ success: false, mensagem: err.message });
+      return responderErroAnimal(res, err);
     }
   },
 
@@ -201,7 +210,7 @@ export const animalController = {
         message: 'Animal removido com sucesso.',
       });
     } catch (err) {
-      return res.status(400).json({ success: false, mensagem: err.message });
+      return responderErroAnimal(res, err);
     }
   },
 };

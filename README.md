@@ -42,6 +42,7 @@ Plataforma web institucional para a **APIA — Associação de Protetores Indepe
   - **Mercado de Bone:** Avenida Afonso Pena, 223, Centro.
   - **Agropecuária Amor a Terra:** Avenida Benjamin Constant, 2291, Centro.
 - Disponibilizar um formulário próprio para cadastro de pessoas interessadas em ser voluntárias.
+  - No frontend atual, o formulário prepara uma mensagem e encaminha a pessoa para o WhatsApp; os dados não são persistidos pela API.
 
 ### Painel administrativo
 
@@ -52,7 +53,7 @@ Plataforma web institucional para a **APIA — Associação de Protetores Indepe
 
 - Criar uma área para divulgar datas e informações de eventos e ações, como bazares solidários e feirinhas de adoção.
 - Apresentar no rodapé as redes sociais oficiais:
-  - **Instagram:** [@ongapiaoficial](https://www.instagram.com/ongapiaoficial/)
+  - **Instagram:** confirmar com a ONG o perfil oficial antes da publicação; o frontend atual exibe `@ongapia.oficial`.
   - **Facebook:** APIA Proteção Animal (confirmar com a ONG o endereço oficial da página antes da publicação).
 
 ## Estrutura de páginas
@@ -99,14 +100,14 @@ apia-plataforma/
 
 - **Front-end:** páginas públicas, formulários, navegação, acessibilidade e painel administrativo responsivo.
 - **Back-end:** validação e processamento dos formulários, autenticação da equipe e operações de cadastro, consulta, atualização e arquivamento dos conteúdos.
-- **Banco de dados:** persistência das informações de animais, adoções, voluntariado, eventos e usuários administrativos.
+- **Banco de dados:** persistência das informações de animais, eventos e usuários administrativos.
 - **Imagens:** armazenamento de fotos dos animais e dos registros de finais felizes, com acesso controlado quando necessário.
 
 ### Entidades iniciais do banco de dados
 
 - **Animal:** nome, espécie, porte, descrição, fotos, situação (disponível ou adotado), castrado, vacinado e datas relevantes.
 - **Registro de adoção / final feliz:** animal relacionado, data e conteúdo autorizado para divulgação, incluindo fotos.
-- **Voluntário:** dados de contato e informações fornecidas no formulário, armazenados somente pelo tempo e finalidade necessários.
+- **Voluntário:** o formulário atual encaminha os dados diretamente à conversa de WhatsApp da ONG; não há armazenamento de voluntários na API.
 - **Evento:** título, descrição, data, local, imagem e situação de publicação.
 - **Usuário administrativo:** credenciais protegidas, identificação e permissões de acesso.
 
@@ -132,17 +133,28 @@ O arquivo `render.yaml` configura o serviço web, a verificação de saúde e o 
 | `ADMIN_EMAIL` | E-mail para a conta administrativa inicial |
 | `ADMIN_PASSWORD` | Senha inicial com pelo menos 12 caracteres |
 
-Não coloque esses valores no GitHub nem os envie em mensagens. O servidor só inicia após conectar ao banco e criar/verificar as tabelas. `ADMIN_PASSWORD` só configura a senha na criação inicial; alterar essa variável depois não troca a senha de uma conta existente.
+Não coloque esses valores no GitHub nem os envie em mensagens. O servidor só inicia após conectar ao banco e criar/verificar as tabelas. `ADMIN_PASSWORD` só configura a senha na criação inicial; alterar essa variável depois não troca a senha de uma conta existente. A API oferece login e consulta do usuário autenticado, mas não possui rota pública `/auth/register`; a conta administrativa inicial é criada pelo seed.
 
-Antes de liberar a API publicamente, restrinja o endpoint `/auth/register`: atualmente ele permite que qualquer pessoa crie uma conta e receba um token usado nas operações administrativas.
+No plano gratuito do Render, o serviço pode suspender após períodos sem tráfego e levar algum tempo para responder à primeira solicitação. Isso não apaga registros do PostgreSQL. O frontend apresenta falhas de carregamento separadamente de listas vazias e permite tentar novamente.
 
 ### Frontend na Vercel
 
-Quando o código do frontend estiver disponível, importe o repositório/pasta correta na Vercel e configure a variável de ambiente usada pelo frontend para apontar à URL pública do Render. O nome dessa variável depende da ferramenta usada no frontend (por exemplo, Vite ou Create React App). Configure também o domínio Vercel em `CLIENT_URL` no Render para permitir chamadas da API pelo navegador.
+O frontend está no repositório [apia_client](https://github.com/danielc-silva/apia_client). A configuração atual da Vercel encaminha as chamadas `/api` à API hospedada no Render. Configure o domínio Vercel em `CLIENT_URL` no Render para permitir chamadas da API pelo navegador.
 
 ### Persistência de imagens
 
-Os uploads atuais são gravados na pasta local `uploads/`. O disco do serviço Render pode ser efémero; portanto, as imagens podem deixar de existir após reinicializações ou novos deploys. Antes de usar o site em produção, migre os uploads para um armazenamento externo persistente (por exemplo, Cloudinary ou S3 compatível) e configure suas credenciais somente no painel do provedor.
+Nos endpoints atuais de animais e eventos, o Multer recebe a imagem em memória e o servidor a converte para uma Data URL (`data:image/...;base64,...`), armazenada na coluna `photo_url` do PostgreSQL. Esses uploads não são gravados na pasta local `uploads/`; portanto, a suspensão ou reinicialização do serviço Render, por si só, não deve remover as imagens desses registros. A pasta também é disponibilizada como `/uploads`, mas arquivos ou registros antigos que apontem para esse caminho dependem do disco local e podem deixar de funcionar após reinicializações ou novos deploys.
+
+Para investigar imagens que não aparecem, consulte os valores persistidos no banco:
+
+```sql
+SELECT id, name, left(photo_url, 80) AS inicio_photo_url
+FROM animals
+ORDER BY created_at DESC
+LIMIT 20;
+```
+
+Valores iniciados por `data:image/` estão embutidos no banco; valores como `/uploads/...` apontam para arquivos locais. Faça uma verificação equivalente na coluna `events.photo_url` para imagens de eventos. Como imagens em Base64 aumentam o tamanho do banco e das respostas da API, considere migrá-las para um armazenamento persistente de objetos (por exemplo, Cloudinary ou S3 compatível) caso o volume cresça. Configure credenciais somente no painel do provedor.
 
 ## Cuidados com dados e segurança
 

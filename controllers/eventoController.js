@@ -4,9 +4,21 @@ import { arquivoParaDataUrl } from '../middlewares/uploadMiddleware.js';
 export const eventoController = {
   async listar(req, res) {
     try {
-      const todos = req.query.all === 'true';
-      const dados = await eventoUseCases.listar(!todos);
+      const dados = await eventoUseCases.listar(true);
 
+      return res.status(200).json({
+        success: true,
+        count: dados.length,
+        data: dados,
+      });
+    } catch (err) {
+      return res.status(500).json({ success: false, erro: err.message, message: err.message });
+    }
+  },
+
+  async listarTodos(_req, res) {
+    try {
+      const dados = await eventoUseCases.listar(false);
       return res.status(200).json({
         success: true,
         count: dados.length,
@@ -24,7 +36,7 @@ export const eventoController = {
         return res.status(400).json({ success: false, mensagem: 'ID inválido.' });
       }
 
-      const evento = await eventoUseCases.buscarPorId(id);
+      const evento = await eventoUseCases.buscarPorId(id, true);
       return res.status(200).json({ success: true, data: evento });
     } catch (err) {
       return res.status(404).json({ success: false, mensagem: err.message });
