@@ -14,15 +14,23 @@ const __dirname = path.dirname(__filename);
 const UPLOADS_DIR = path.resolve(__dirname, 'uploads');
 
 export const app = express();
-const origensPermitidas = (process.env.CLIENT_URL || 'http://localhost:5173')
+const origensPermitidas = (process.env.CLIENT_URL || '')
   .split(',')
-  .map((origem) => origem.trim())
+  .map((origem) => origem.trim().replace(/\/+$/, ''))
   .filter(Boolean);
 
 app.use(
   cors({
     origin: (origem, callback) => {
-      callback(null, !origem || origensPermitidas.includes(origem));
+      if (!origem || origensPermitidas.length === 0 || origensPermitidas.includes('*')) {
+        return callback(null, true);
+      }
+      const origemNormalizada = origem.replace(/\/+$/, '');
+      const ehPermitida =
+        origensPermitidas.includes(origemNormalizada) ||
+        origemNormalizada.endsWith('.vercel.app') ||
+        origemNormalizada.startsWith('http://localhost:');
+      return callback(null, ehPermitida);
     },
   })
 );
@@ -34,7 +42,9 @@ app.use('/uploads', express.static(UPLOADS_DIR));
 
 // Montagem das rotas modulares (padrão igual ao api-gerenciador-pesagens)
 app.use('/animais', rotasAnimais);
+app.use('/animals', rotasAnimais);
 app.use('/eventos', rotasEventos);
+app.use('/events', rotasEventos);
 app.use('/auth', rotasAuth);
 
 // Rotas também sob o prefixo /api para integração com o front-end
