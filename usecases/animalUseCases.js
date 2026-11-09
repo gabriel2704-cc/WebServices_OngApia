@@ -1,11 +1,29 @@
-import { eq, and, ilike, or, desc } from 'drizzle-orm';
+import { eq, and, ilike, or, desc, sql } from 'drizzle-orm';
 import { db } from '../db.js';
 import { animais } from '../schema.js';
 import { Animal } from '../entities/Animal.js';
 import { AnimalNotFoundError, validarDadosAnimal } from '../entities/animalValidation.js';
 
 export const animalUseCases = {
+  async listarFinaisFelizes(limite = 12) {
+    return await db
+      .select({
+        id: animais.id,
+        name: animais.name,
+        photoUrl: animais.photoUrl,
+        photo_url: animais.photoUrl,
+      })
+      .from(animais)
+      .where(eq(animais.status, 'adotado'))
+      .orderBy(sql`RANDOM()`)
+      .limit(limite);
+  },
+
   async listar(filtros = {}) {
+    if (filtros.status?.toLowerCase() === 'adotado' && filtros.random) {
+      return await this.listarFinaisFelizes(filtros.limit || 12);
+    }
+
     const condicoes = [];
 
     if (filtros.species && filtros.species !== 'todos') {

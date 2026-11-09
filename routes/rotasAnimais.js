@@ -8,6 +8,7 @@ export const rotasAnimais = Router();
 
 // Rotas públicas
 rotasAnimais.get('/', animalController.listar);
+rotasAnimais.get('/finais-felizes', animalController.listarFinaisFelizes);
 rotasAnimais.get('/:id', animalController.buscarPorId);
 
 // Rotas protegidas (Admin)
