@@ -28,9 +28,22 @@ function obterBooleano(corpo, campo, campoAlternativo, padrao) {
 }
 
 export const animalController = {
+  async listarFinaisFelizes(_req, res) {
+    try {
+      const dados = await animalUseCases.listarFinaisFelizes(12);
+      return res.status(200).json({
+        success: true,
+        count: dados.length,
+        data: dados,
+      });
+    } catch (err) {
+      return responderErroAnimal(res, err);
+    }
+  },
+
   async listar(req, res) {
     try {
-      const { species, size, age, gender, status, search } = req.query;
+      const { species, size, age, gender, status, search, random } = req.query;
 
       const dados = await animalUseCases.listar({
         species: species ? String(species) : undefined,
@@ -39,6 +52,7 @@ export const animalController = {
         gender: gender ? String(gender) : undefined,
         status: status ? String(status) : undefined,
         search: search ? String(search) : undefined,
+        random: random === 'true' || random === '1',
       });
 
       return res.status(200).json({
